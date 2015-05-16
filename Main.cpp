@@ -1,3 +1,14 @@
+//Globals for now
+uint16_t duty_cycle = 0;
+uint8_t dc_low_byte = 0;
+char dc_high_byte = 0;
+uint8_t slave = 0x40<<1; // 8 bit addr
+uint8_t mode1_reg = 0x0;
+uint8_t prescale_reg = 0xFE;
+uint8_t prescale_value = 0x80;
+uint8_t sleep = 0x10;
+uint8_t initialize = 0xA1;
+
 typedef enum { //enumeration is a numbered list of variables
    IMU_Q,
    controller_Q
@@ -92,11 +103,9 @@ class readIMU : public scheduler_task { //create task on AHREF board only
         addSharedObject(IMU_Q, q); //add my sensor to the queue
     };
     bool run(void *p) {
- 
         TickType_t xLastWakeTime;
         const TickType_t xFrequency = 20;
         xLastWakeTime = xTaskGetTickCount();
- 
         char value[quesize] = {0};
         Uart3& u3 = Uart3::getInstance();
         u3.init(115200); //baud rate
@@ -111,16 +120,6 @@ class readIMU : public scheduler_task { //create task on AHREF board only
 void initializeMotors (void) {
     I2C2& i2c = I2C2::getInstance(); // Get I2C driver instance
     i2c.init(100);
-    uint8_t slave = 0x40<<1; // 8 bit addr
-    uint8_t mode1_reg = 0x0;
-    uint8_t prescale_reg = 0xFE;
-    uint8_t prescale_value = 0x80;
-    uint8_t sleep = 0x10;
-    uint8_t initialize = 0xA1;
-    float user_input = 0;
-    uint16_t duty_cycle = 0;
-    uint8_t dc_low_byte = 0;
-    char dc_high_byte = 0;
     //initialize
     i2c.writeReg(slave, mode1_reg, sleep); //sleep
     delay_ms(1);
