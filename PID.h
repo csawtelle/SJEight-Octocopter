@@ -6,13 +6,13 @@
 #define SCALING_FACTOR  128
  
 typedef struct PID_DATA{
-  int16_t lastProcessValue;
-  int32_t sumError;
-  int16_t P_Factor;
-  int16_t I_Factor;
-  int16_t D_Factor;
-  int16_t maxError;
-  int32_t maxSumError;
+  int16_t previousPWM;
+  int32_t sumE;
+  int16_t P;
+  int16_t I;
+  int16_t D;
+  int16_t maxE;
+  int32_t maxSumE;
 } pidData_t;
  
 #define MAX_INT         INT16_MAX
@@ -21,7 +21,7 @@ typedef struct PID_DATA{
 #define FALSE           0
 #define TRUE            1
  
-void pid_Init(int16_t p_factor, int16_t i_factor, int16_t d_factor, struct PID_DATA *pid);
+void pid_Init(int16_t p, int16_t i, int16_t d, struct PID_DATA *pid);
 int16_t pid_Controller(int16_t setPoint, int16_t processValue, struct PID_DATA *pid_st);
 void pid_Reset_Integrator(pidData_t *pid_st);
  
