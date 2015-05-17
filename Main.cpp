@@ -8,6 +8,11 @@ uint8_t prescale_reg = 0xFE;
 uint8_t prescale_value = 0x80;
 uint8_t sleep = 0x10;
 uint8_t initialize = 0xA1;
+typedef enum {
+   yaw,
+   pitch,
+   roll
+} axis_t
 
 typedef enum { //enumeration is a numbered list of variables
    IMU_Q,
@@ -163,30 +168,66 @@ void initializeMotors (void) {
     }
 }
 
-void motorPWM (void) {
-     printf("\n Starting while \n");
-     scanf("%f", &user_input);
-     printf("\n %f", user_input);
-     duty_cycle = (user_input*4096)/100;
-     printf("\n %f",user_input);
-     printf("\n Duty Cycle: ");
-     printf("%d",duty_cycle);
-     if(duty_cycle) {
-         dc_low_byte = duty_cycle;
-         dc_high_byte = duty_cycle >> 8;
-         for (int n = 6; n < 66;) {
-             i2c.writeReg(slave, n, 0x0); //low byte
-             delay_ms(1);
-             i2c.writeReg(slave, n+1, 0x0); //high byte
-             delay_ms(1);
-             i2c.writeReg(slave, n+2, dc_low_byte); //low byte
-             delay_ms(1);
-             i2c.writeReg(slave, n+3, dc_high_byte); //high byte
-             delay_ms(1);
-             n=n+4;
-         }
-         duty_cycle = 0;
-     }    
+void motorPWM (uint8_t axis, uint16_t positivePWM, uint16_t negativePWM) {
+   dcPositive = (positivePWM*4096)/100;
+   dcPositiveLow = dcPositive;
+   dcPositiveHigh = dcPositive >> 8;
+   dcNegative = (negativePWM*4096)/100;
+   dcNegativeLow = dcNegative;
+   dcNegativeHigh = dcNegative >> 8;
+   if(axis == yaw) {
+      //yaw is created by creating a power differential between the CW and CCW motors (oppsite rotation 2,6,10,14)
+       i2c.writeReg(slave, n, 0x0); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, n+1, 0x0); //high byte
+       delay_ms(1);
+       i2c.writeReg(slave, n+2, dcPositiveLow); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, n+3, dcPositiveHigh); //high byte
+       delay_ms(1);
+       
+   }
+   if(axis == pitch) {
+       //positive pitch is motor 0
+       i2c.writeReg(slave, 6, 0x0); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 7, 0x0); //high byte
+       delay_ms(1);
+       i2c.writeReg(slave, 8, dcPositiveLow); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 9, dcPositiveHigh); //high byte
+       delay_ms(1);
+       //positive pitch is motor 8
+       i2c.writeReg(slave, 38, 0x0); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 39, 0x0); //high byte
+       delay_ms(1);
+       i2c.writeReg(slave, 40, dcNegativeLow); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 41, dcNegativeHigh); //high byte
+       delay_ms(1);
+   }
+   if(axis == roll) {
+       //Positive roll is motor 4
+       i2c.writeReg(slave, 22, 0x0); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 23, 0x0); //high byte
+       delay_ms(1);
+       i2c.writeReg(slave, 24, dcPositiveLow); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 25, dcPositiveHigh); //high byte
+       delay_ms(1);
+       //Negative roll is motor 12
+       i2c.writeReg(slave, 54, 0x0); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 55, 0x0); //high byte
+       delay_ms(1);
+       i2c.writeReg(slave, 56, dcNegativeLow); //low byte
+       delay_ms(1);
+       i2c.writeReg(slave, 57, dcNegativeHigh); //high byte
+       delay_ms(1);
+   }
+   duty_cycle = 0;
 }
 int main(void) {
 
