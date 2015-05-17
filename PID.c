@@ -1,64 +1,64 @@
 #include "pid.h"
 #include "stdint.h"
  
-void pid_Init(int16_t p_factor, int16_t i_factor, int16_t d_factor, struct PID_DATA *pid)
+void pidInit(int16_t p, int16_t i, int16_t d, struct pidDATA *pid)
 {
-  pid->sumError = 0;
-  pid->lastProcessValue = 0;
-  pid->P_Factor = p_factor;
-  pid->I_Factor = i_factor;
-  pid->D_Factor = d_factor;
-  pid->maxError = MAX_INT / (pid->P_Factor + 1);
-  pid->maxSumError = MAX_I_TERM / (pid->I_Factor + 1);
+  pid->sumE = 0;
+  pid->previousPWM = 0;
+  pid->pGain = p;
+  pid->iGain = i;
+  pid->dGain = d;
+  pid->maxE = MAX_INT / (pid->p + 1);
+  pid->maxsumE = MAX_I_TERM / (pid->i + 1);
 }
  
-int16_t pid_Controller(int16_t setPoint, int16_t processValue, struct PID_DATA *pid_st)
+int16_t pidController(int16_t set, int16_t currentPWM, struct pidDATA *pid_st)
 {
-  int16_t error, p_term, d_term;
-  int32_t i_term, ret, temp;
+  int16_t error, pTerm, dTerm;
+  int32_t iTerm, PWM, temp;
  
-  error = setPoint - processValue;
+  error = setPoint - currentPWM;
  
-  if (error > pid_st->maxError){
-    p_term = MAX_INT;
+  if (error > pid_st->maxE){
+    pTerm = MAX_INT;
   }
-  else if (error < -pid_st->maxError){
-    p_term = -MAX_INT;
+  else if (error < -pid_st->maxE){
+    pTerm = -MAX_INT;
   }
   else{
-    p_term = pid_st->P_Factor * error;
+    pTerm = pid_st->p * error;
   }
  
   temp = pid_st->sumError + error;
-  if(temp > pid_st->maxSumError){
-    i_term = MAX_I_TERM;
-    pid_st->sumError = pid_st->maxSumError;
+  if(temp > pid_st->maxSumE){
+    iTerm = MAX_I_TERM;
+    pid_st->sumE = pid_st->maxSumE;
   }
   else if(temp < -pid_st->maxSumError){
-    i_term = -MAX_I_TERM;
-    pid_st->sumError = -pid_st->maxSumError;
+    iTerm = -MAX_I_TERM;
+    pid_st->sumE = -pid_st->maxSumE;
   }
   else{
-    pid_st->sumError = temp;
-    i_term = pid_st->I_Factor * pid_st->sumError;
+    pid_st->sumE = temp;
+    iTerm = pid_st->i * pid_st->sumE;
   }
  
-  d_term = pid_st->D_Factor * (pid_st->lastProcessValue - processValue);
+  dTerm = pid_st->d * (pid_st->previousPWM - currentPWM);
  
-  pid_st->lastProcessValue = processValue;
+  pid_st->previousPWM = currentPWM;
  
-  ret = (p_term + i_term + d_term) / SCALING_FACTOR;
-  if(ret > MAX_INT){
-    ret = MAX_INT;
+  PWM = (pTerm + iTerm + dTerm) / SCALING_FACTOR;
+  if(PWM > MAX_INT){
+    PWM = MAX_INT;
   }
-  else if(ret < -MAX_INT){
-    ret = -MAX_INT;
+  else if(PWM < -MAX_INT){
+    PWM = -MAX_INT;
   }
  
-  return((int16_t)ret);
+  return((int16_t)PWM);
 }
  
-void pid_Reset_Integrator(pidData_t *pid_st)
+void pid_flush_I(pidData_t *pid_st)
 {
-  pid_st->sumError = 0;
+  pid_st->sumE = 0;
 }
