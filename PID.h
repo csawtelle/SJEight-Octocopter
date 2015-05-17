@@ -5,7 +5,7 @@
  
 #define SCALING_FACTOR  128
  
-typedef struct PID_DATA{
+typedef struct pidDATA{
   int16_t previousPWM;
   int32_t sumE;
   int16_t P;
