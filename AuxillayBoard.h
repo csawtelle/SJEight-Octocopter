@@ -34,3 +34,47 @@ class readGPS : public scheduler_task {
              return true;
          }
  };
+void GPS_init(void) {
+    char init_response[quesize] = {0};
+    Uart3& u3 = Uart3::getInstance();
+    u3.init(9600); //baud rate
+    const char baud_57600[] = "$PMTK251,57600*2C";
+    const char output_RMCGGA[] = "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\n";
+    const char update_1hz[]= "$PMTK220,1000*1F\n";
+    const char update_5hz[]=  "$PMTK220,200*2C";
+    const char antenna[] = "$PGCMD,33,1*6C\n";
+    const char no_antenna[] =  "$PGCMD,33,0*6D";
+    //request release and version number
+    //const char PMTK_Q_RELEASE[] = "PMTK605*31\n";
+ 
+    //Set the output for RMC and GGA
+    u3.putline(output_RMCGGA);
+    u3.gets(&init_response[0],quesize,1000);
+    puts(init_response);
+    puts("\n");
+ 
+    //Set the output rate 1Hz
+    init_response[quesize] = {0};
+    u3.putline(update_5hz);
+    u3.gets(&init_response[0],quesize,1000);
+    puts(init_response);
+    puts("\n");
+ 
+    //Set the antenna type
+    init_response[quesize] = {0};
+    u3.putline(no_antenna);
+    u3.gets(&init_response[0],quesize,1000);
+    puts(init_response);
+    puts("\n");
+ 
+    //Set the output for RMC and GGA
+    u3.putline(baud_57600);
+    u3.gets(&init_response[0],quesize,1000);
+    puts(init_response);
+    puts("\n");
+ 
+    //Respond with init finish
+    puts("GPS Init complete");
+    puts("\n");
+ 
+}
