@@ -3,7 +3,6 @@
     i2c.init(100);
     uint8_t slave = 0x40<<1; // 8 bit addr
 
-
 typedef enum {
    yaw,
    pitch,
