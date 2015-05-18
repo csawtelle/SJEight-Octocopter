@@ -12,7 +12,7 @@ void pidInit(int16_t p, int16_t i, int16_t d, struct pidDATA *pid)
   pid->maxsumE = MAX_I_TERM / (pid->i + 1);
 }
  
-int16_t pidController(int16_t set, int16_t currentPWM, struct pidDATA *pid_st)
+int16_t pidController(int16_t set, int16_t currentPWM, struct pidDATA *pid)
 {
   int16_t error, pTerm, dTerm;
   int32_t iTerm, PWM, temp;
@@ -58,7 +58,7 @@ int16_t pidController(int16_t set, int16_t currentPWM, struct pidDATA *pid_st)
   return((int16_t)PWM);
 }
  
-void pid_flush_I(pidData_t *pid_st)
+void pid_flush_I(pidData_t *pid)
 {
   pid_st->sumE = 0;
 }
