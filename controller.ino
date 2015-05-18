@@ -11,7 +11,6 @@ int LH = 0;
 int RV = 0;
 int RH = 0;
  
- 
 void setup() {
 Serial.begin(115200);
 XBee.begin(9600);
