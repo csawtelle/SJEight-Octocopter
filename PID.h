@@ -13,8 +13,12 @@ typedef struct pidDATA{
   int16_t D;
   int16_t maxE;
   int32_t maxSumE;
-} pidData_t;
- 
+};
+
+struct pidDATA yawPID;
+struct pidDATA pitchPID;
+struct pidDATA rollPID;
+
 #define MAX_INT         INT16_MAX
 #define MAX_LONG        INT32_MAX
 #define MAX_I_TERM      (MAX_LONG / 2)
@@ -22,7 +26,7 @@ typedef struct pidDATA{
 #define TRUE            1
  
 void pid_Init(int16_t p, int16_t i, int16_t d, struct pidDATA *pid);
-int16_t pid_Controller(int16_t setPoint, int16_t currentPWM, struct pidDATA *pid_st);
+int16_t pid_Controller(int16_t setPoint, int16_t currentPWM, struct pidDATA *pid);
 void pid_Reset_Integrator(pidData_t *pid_st);
  
 #endif
