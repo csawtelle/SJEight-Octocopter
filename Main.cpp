@@ -10,7 +10,8 @@ typedef enum {
    roll
 } axis_t
 
-typedef enum { //enumeration is a numbered list of variables
+typedef enum { //enumeration is a numbered list of variable
+   GPS_Q,
    IMU_Q,
    controller_Q
 } sharedHandleId_t;
