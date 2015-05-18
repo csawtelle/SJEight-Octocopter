@@ -18,3 +18,19 @@ class readGPS : public scheduler_task {
         return true;
     }
 };
+ class calculateGPS : public scheduler_task
+ {
+     public:
+         calculateGPS(uint8_t priority) : scheduler_task("parseGPS", 2048, priority) { }
+         bool run(void *p) {
+             char valuebuffer[quesize] = {0};
+             QueueHandle_t q_name = getSharedObject(GPS_Q); //create the q
+             if (xQueueReceive(q_name, &valuebuffer, portMAX_DELAY)) {
+                printf("\n");
+                puts(valuebuffer);
+                printf("\n");
+                //TODO finish the parsing
+                }
+             return true;
+         }
+ };
