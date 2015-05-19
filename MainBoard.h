@@ -1,3 +1,23 @@
+ class readIMU : public scheduler_task { //create task on AHREF board only
+    public:
+        readIMU(uint8_t priority) : scheduler_task("read_AHREF", 2048, priority) {
+        QueueHandle_t q = xQueueCreate(1, quesize); //create queue
+        addSharedObject(IMU_Q, q); //add my sensor to the queue
+    };
+    bool run(void *p) {
+        TickType_t xLastWakeTime;
+        const TickType_t xFrequency = 20;
+        xLastWakeTime = xTaskGetTickCount();
+        char value[quesize] = {0};
+        Uart3& u3 = Uart3::getInstance();
+        u3.init(115200); //baud rate
+        u3.putline("#s<12>");
+        u3.gets(&value[0],quesize,100);
+        xQueueSend(getSharedObject(IMU_Q), &value, portMAX_DELAY); //sends the data to the queue to be processed
+        vTaskDelayUntil( &xLastWakeTime, xFrequency/portTICK_PERIOD_MS );
+        return true;
+    }
+}
 class calculateIMU : public scheduler_task //create a task on the AHREF board only
 {
   public:
@@ -40,24 +60,3 @@ class calculateIMU : public scheduler_task //create a task on the AHREF board on
       }
    
 };
- 
-class readIMU : public scheduler_task { //create task on AHREF board only
-    public:
-        readIMU(uint8_t priority) : scheduler_task("read_AHREF", 2048, priority) {
-        QueueHandle_t q = xQueueCreate(1, quesize); //create queue
-        addSharedObject(IMU_Q, q); //add my sensor to the queue
-    };
-    bool run(void *p) {
-        TickType_t xLastWakeTime;
-        const TickType_t xFrequency = 20;
-        xLastWakeTime = xTaskGetTickCount();
-        char value[quesize] = {0};
-        Uart3& u3 = Uart3::getInstance();
-        u3.init(115200); //baud rate
-        u3.putline("#s<12>");
-        u3.gets(&value[0],quesize,100);
-        xQueueSend(getSharedObject(IMU_Q), &value, portMAX_DELAY); //sends the data to the queue to be processed
-        vTaskDelayUntil( &xLastWakeTime, xFrequency/portTICK_PERIOD_MS );
-        return true;
-    }
-}
