@@ -1,8 +1,7 @@
 #include "pid.h"
 #include "stdint.h"
  
-void pidInit(int16_t p, int16_t i, int16_t d, struct pidDATA *pid)
-{
+void pidInit(int16_t p, int16_t i, int16_t d, struct pidDATA *pid) {
   pid->sumE = 0;
   pid->previousPWM = 0;
   pid->pGain = p;
@@ -12,33 +11,32 @@ void pidInit(int16_t p, int16_t i, int16_t d, struct pidDATA *pid)
   pid->maxsumE = MAX_I_TERM / (pid->i + 1);
 }
  
-int16_t pidController(int16_t set, int16_t currentPWM, struct pidDATA *pid)
-{
+int16_t pidController(int16_t set, int16_t currentPWM, struct pidDATA *pid) {
   int16_t error, pTerm, dTerm;
   int32_t iTerm, PWM, temp;
  
   error = setPoint - currentPWM;
  
-  if (error > pid_st->maxE){
+  if (error > pid_st->maxE) {
     pTerm = MAX_INT;
   }
-  else if (error < -pid_st->maxE){
+  else if (error < -pid_st->maxE) {
     pTerm = -MAX_INT;
   }
-  else{
+  else {
     pTerm = pid_st->p * error;
   }
  
   temp = pid_st->sumError + error;
-  if(temp > pid_st->maxSumE){
+  if(temp > pid_st->maxSumE) {
     iTerm = MAX_I_TERM;
     pid_st->sumE = pid_st->maxSumE;
   }
-  else if(temp < -pid_st->maxSumError){
+  else if(temp < -pid_st->maxSumError) {
     iTerm = -MAX_I_TERM;
     pid_st->sumE = -pid_st->maxSumE;
   }
-  else{
+  else {
     pid_st->sumE = temp;
     iTerm = pid_st->i * pid_st->sumE;
   }
@@ -48,10 +46,10 @@ int16_t pidController(int16_t set, int16_t currentPWM, struct pidDATA *pid)
   pid_st->previousPWM = currentPWM;
  
   PWM = (pTerm + iTerm + dTerm) / SCALING_FACTOR;
-  if(PWM > MAX_INT){
+  if(PWM > MAX_INT) {
     PWM = MAX_INT;
   }
-  else if(PWM < -MAX_INT){
+  else if(PWM < -MAX_INT) {
     PWM = -MAX_INT;
   }
  
