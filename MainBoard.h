@@ -49,12 +49,9 @@ class calculateIMU : public scheduler_task //create a task on the AHREF board on
              pitch = str::toFloat(tokens[2]);
              roll = str::toFloat(tokens[3]);
 
-             printf("\n");
-             printf("\nYAW:%.3f",yaw);
-             printf("     ");
-             printf("PITCH:%.3f",pitch);
-             printf("     ");
-             printf("ROLL:%.3f",roll);
+             pidController(setPoint, yaw, yawPID);
+             pidController(setPoint, pitch, pitchPID);
+             pidController(setPoint, roll, rollPID);
           }
           return true;
       }
