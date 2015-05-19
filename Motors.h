@@ -67,19 +67,19 @@ void motorPWM (uint16_t yawPIDv, uint16_t pitchPIDv, uint16_t rollPIDv) {
 */
 
 //The YAW probably wont work because the blades are all same rotation, needs to be fixed
-   dcFront = (frontThrottle*4096)/100 + pitchPID - yawPIDv;
+   dcFront = (frontThrottle*4096)/100 + pitchPIDv - yawPIDv;
    dcFrontLow = dcFront;
    dcFrontHigh = dcFront >> 8;
    
-   dcBack = (backThrottle*4096)/100 + pitchPID - yawPIDv;
+   dcBack = (backThrottle*4096)/100 + pitchPIDv - yawPIDv;
    dcBackLow = dcBack;
    dcBackHigh = dcBack >> 8;
    
-   dcLeft = (leftThrottle*4096)/100 + pitchPID - yawPIDv;
+   dcLeft = (leftThrottle*4096)/100 + pitchPIDv - yawPIDv;
    dcLeftLow = dcLeft;
    dcLeftLow = dcLeft >> 8;
    
-   dcRight = (rightThrottle*4096)/100 + pitchPID - yawPIDv;
+   dcRight = (rightThrottle*4096)/100 + pitchPIDv - yawPIDv;
    dcRightLow = dcRight;
    dcRightHigh = dcRight >> 8;
 
