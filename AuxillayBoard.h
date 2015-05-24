@@ -28,9 +28,52 @@
              QueueHandle_t q_name = getSharedObject(controller_Q); //create the q
              if (xQueueReceive(q_name, &valuebuffer, portMAX_DELAY)) {
                 printf("\n");
-                printf(valuebuffer);
-                printf("\n");
- 
+                //printf(valuebuffer);
+                //printf("\n");
+                char *tokens[4];
+                char *p;
+                p=strtok(valuebuffer,":");
+                int j =0;
+                
+                while(p){
+                  token[j++] = p;
+                  p = strtok(NULL, ":");
+                }
+                //stick ranges from 0-1024, so divide by 10 to get roughly 0-100%
+               float throttle = (str::toFloat(tokens[1]))/10; 
+               float nada = (str::toFloat(tokens[2]))/10;
+               float pitch = (str::toFloat(tokens[3]))/10;
+               float roll = (str::toFloat(tokens[4]))/10;
+               
+               if(throttle< 65 | throttle >45){ //because sticks don't sit exactly at 500
+                 throttle = 50;
+               }
+                if (throttle >= 85)
+                throttle = 85;
+                
+                if(pitch< 65 | pitch >45){ //because sticks don't sit exactly at 500
+                 pitch = 0; zero percent pitch
+               }
+                
+                if (pitch > 65){
+                  pitch = 2;
+                }
+                
+                if (pitch < 45){
+                 pitch = -2;
+                }
+                  if(roll< 65 | roll >45){ //because sticks don't sit exactly at 500
+                 roll = 0; //zero percent roll 
+               }
+               
+               if(roll > 65){
+                 roll = 2;
+               }
+               
+               if(roll < 45){
+                 roll = -2;
+               }
+               
                 }
              return true;
          }
