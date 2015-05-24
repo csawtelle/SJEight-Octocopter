@@ -7,6 +7,7 @@ struct motorThrottle_struct {
    uint16_t rightCW;
    uint16_t backCCW;
    uint16_t backCW;
+   uint16_t base;
 } motorThrottle; 
  
 void initializeMotors (void) {
