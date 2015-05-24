@@ -16,6 +16,7 @@
 #include "semphr.h"
 #include "eint.h"
 #include "PID.h"
+#include "src/PID.c"
 #include "string.h"
 #include "str.hpp"
 #include "wireless.h"
@@ -29,6 +30,14 @@ uint16_t yawPIDv = 0;
 uint16_t rollPIDv = 0;
 uint16_t pitchPIDv = 0;
 uint16_t setPoint = 0;
+uint8_t dcFront, dcFrontLow, dcFrontHigh;
+uint8_t dcLeft, dcLeftLow, dcLeftHigh;
+uint8_t dcRight, dcRightLow, dcRightHigh;
+uint8_t dcBack, dcBackLow, dcBackHigh;
+uint8_t slave = 0x40<<1; // 8 bit addr
+uint16_t duty_cycle = 0;
+uint8_t dc_low_byte = 0;
+uint8_t dc_high_byte = 0;
 
 struct motorThrottle_struct {
    uint16_t frontCCW;
@@ -39,7 +48,10 @@ struct motorThrottle_struct {
    uint16_t rightCW;
    uint16_t backCCW;
    uint16_t backCW;
-   uint16_t base;
+   uint16_t throttle;
+   uint16_t yawPIDv;
+   uint16_t pitchPIDv;
+   uint16_t rollPIDv;
 } motorThrottle;
 
 //Globals for now
@@ -58,7 +70,104 @@ typedef enum { //enumeration is a numbered list of variable
 } sharedHandleId_t;
 #define quesize 100
 
-  class readController : public scheduler_task {
+void motorPWM () {
+    I2C2& i2c = I2C2::getInstance(); // Get I2C driver instance
+    i2c.init(100);
+
+/*
+      Front = Throttle + PitchPID - YawPID
+      Back = Throttle - PitchPID - YawPID
+      Left = Throttle + RollPID + YawPID
+      Right = Throttle - RollPID + YawPID
+*/
+
+//The YAW probably wont work because the blades are all same rotation, needs to be fixed
+   dcFront = motorThrottle.throttle + motorThrottle.pitchPIDv - motorThrottle.yawPIDv;
+   dcFrontLow = dcFront;
+   dcFrontHigh = dcFront >> 8;
+
+   dcBack = motorThrottle.throttle + motorThrottle.pitchPIDv - motorThrottle.yawPIDv;
+   dcBackLow = dcBack;
+   dcBackHigh = dcBack >> 8;
+
+   dcLeft = motorThrottle.throttle + motorThrottle.pitchPIDv - motorThrottle.yawPIDv;
+   dcLeftLow = dcLeft;
+   dcLeftLow = dcLeft >> 8;
+
+   dcRight = motorThrottle.throttle + motorThrottle.pitchPIDv - motorThrottle.yawPIDv;
+   dcRightLow = dcRight;
+   dcRightHigh = dcRight >> 8;
+
+   //Front
+   i2c.writeReg(slave, 58, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 58+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 58+2, dcFrontLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 58+3, dcFrontHigh); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 62, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 62+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 62+2, dcFrontLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 62+3, dcFrontHigh); //high byte
+   delay_ms(1);
+   //back
+   i2c.writeReg(slave, 14+0, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 14+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 14+2, dcFrontLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 14+3, dcFrontHigh); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 10, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 10+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 10+2, dcFrontLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 10+3, dcFrontHigh); //high byte
+   //left
+   i2c.writeReg(slave, 18, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 18+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 18+2, dcLeftLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 18+3, dcLeftHigh); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 53, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 53+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 53+2, dcLeftLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 53+3, dcLeftHigh); //high byte
+   delay_ms(1);
+   //right
+   i2c.writeReg(slave, 6, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 6+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 6+2, dcRightLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 6+3, dcRightHigh); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 66, 0x0); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 66+1, 0x0); //high byte
+   delay_ms(1);
+   i2c.writeReg(slave, 66+2, dcRightLow); //low byte
+   delay_ms(1);
+   i2c.writeReg(slave, 66+3, dcRightHigh); //high byte
+   delay_ms(1);
+}
+
+class readController : public scheduler_task {
     public:
         readController(uint8_t priority) : scheduler_task("readController", 2048, priority) {
         QueueHandle_t q = xQueueCreate(1, quesize); //create queue
@@ -275,16 +384,11 @@ class calculateIMU : public scheduler_task //create a task on the AHREF board on
              yawPIDv = pidController(setPoint, yaw, &yawPID);
              pitchPIDv = pidController(setPoint, pitch, &pitchPID);
              rollPIDv = pidController(setPoint, roll, &rollPID);
-          }
+             motorPWM();
           return true;
       }
-
+   }
 };
-
-uint8_t slave = 0x40<<1; // 8 bit addr
-uint16_t duty_cycle = 0;
-uint8_t dc_low_byte = 0;
-uint8_t dc_high_byte = 0;
 
 void initializeMotors (void) {
     I2C2& i2c = I2C2::getInstance(); // Get I2C driver instance
@@ -335,111 +439,15 @@ void initializeMotors (void) {
             delay_ms(1);
         }
     }
-}
+};
 
-uint8_t dcFront, dcFrontLow, dcFrontHigh;
-uint8_t dcLeft, dcLeftLow, dcLeftHigh;
-uint8_t dcRight, dcRightLow, dcRightHigh;
-uint8_t dcBack, dcBackLow, dcBackHigh;
 
-void motorPWM (uint16_t yawPIDv, uint16_t pitchPIDv, uint16_t rollPIDv, uint16_t throttle) {
-    I2C2& i2c = I2C2::getInstance(); // Get I2C driver instance
-    i2c.init(100);
-/*
-      Front = Throttle + PitchPID - YawPID
-      Back = Throttle - PitchPID - YawPID
-      Left = Throttle + RollPID + YawPID
-      Right = Throttle - RollPID + YawPID
-*/
-
-//The YAW probably wont work because the blades are all same rotation, needs to be fixed
-   dcFront = throttle + pitchPIDv - yawPIDv;
-   dcFrontLow = dcFront;
-   dcFrontHigh = dcFront >> 8;
-
-   dcBack = throttle + pitchPIDv - yawPIDv;
-   dcBackLow = dcBack;
-   dcBackHigh = dcBack >> 8;
-
-   dcLeft = throttle + pitchPIDv - yawPIDv;
-   dcLeftLow = dcLeft;
-   dcLeftLow = dcLeft >> 8;
-
-   dcRight = throttle + pitchPIDv - yawPIDv;
-   dcRightLow = dcRight;
-   dcRightHigh = dcRight >> 8;
-
-   //Front
-   i2c.writeReg(slave, 58, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 58+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 58+2, dcFrontLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 58+3, dcFrontHigh); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 62, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 62+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 62+2, dcFrontLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 62+3, dcFrontHigh); //high byte
-   delay_ms(1);
-   //back
-   i2c.writeReg(slave, 14+0, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 14+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 14+2, dcFrontLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 14+3, dcFrontHigh); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 10, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 10+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 10+2, dcFrontLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 10+3, dcFrontHigh); //high byte
-   //left
-   i2c.writeReg(slave, 18, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 18+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 18+2, dcLeftLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 18+3, dcLeftHigh); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 53, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 53+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 53+2, dcLeftLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 53+3, dcLeftHigh); //high byte
-   delay_ms(1);
-   //right
-   i2c.writeReg(slave, 6, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 6+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 6+2, dcRightLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 6+3, dcRightHigh); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 66, 0x0); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 66+1, 0x0); //high byte
-   delay_ms(1);
-   i2c.writeReg(slave, 66+2, dcRightLow); //low byte
-   delay_ms(1);
-   i2c.writeReg(slave, 66+3, dcRightHigh); //high byte
-   delay_ms(1);
-}
 int main(void) {
-
-
+    initializeMotors();
+    scheduler_add_task(new readController(PRIORITY_LOW));
+    scheduler_add_task(new processController(PRIORITY_LOW));
+    scheduler_add_task(new readIMU(PRIORITY_HIGH));
+    scheduler_add_task(new calculateIMU(PRIORITY_MEDIUM));
 
     //Add tasks depending on which board you are loading the code too
     /**
