@@ -25,4 +25,4 @@ This was the final project for SJSU CompE244. I worked on a team of 4 engineers.
 
 ## Arduino Mega Files
 
-*controller.ino
+* controller.ino
